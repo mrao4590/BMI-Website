@@ -1,18 +1,28 @@
-name: Insert Commit into PostgreSQL
+name: Insert Commit ID
 
 on:
-  pull_request:
-    types: [opened, synchronize]   # Runs when PR is created/updated
+  push:
+    branches:
+      - main  # or your branch
 
 jobs:
   insert-commit:
-    runs-on: self-hosted
+    runs-on: self-hosted   # uses your added runner
+
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          PGPASSWORD=$DB_PASSWORD psql \
-            -h 127.0.0.1 \
-            -p 5432 \
-            -U $DB_USER \
-            -d $DB_NAME \
-            -c "INSERT INTO commit_log (commit_id) VALUES ('${{ github.sha }}');"
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get Commit ID
+        id: commit
+        run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+      - name: Insert Commit ID to PostgreSQL DB
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}  # store your DB password in GitHub Secrets
+        run: |
+          echo "Inserting commit $COMMIT_ID into DB"
+          psql -h ${{ secrets.DB_HOST }} \
+               -U ${{ secrets.DB_USER }} \
+               -d ${{ secrets.DB_NAME }} \
+               -c "INSERT INTO commits (commit_id) VALUES ('$COMMIT_ID');"
