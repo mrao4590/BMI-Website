@@ -1,4 +1,4 @@
-name: Insert Commit ID
+name: Insert Commit Info
 
 on:
   push:
@@ -13,18 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Get Short Commit ID
+      - name: Get Commit Info
         id: commit
         run: |
           SHORT_COMMIT=$(git rev-parse --short=7 HEAD)
+          AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s')
+          # Export as environment variables
           echo "COMMIT_ID=$SHORT_COMMIT" >> $GITHUB_ENV
+          echo "AUTHOR_NAME=$AUTHOR_NAME" >> $GITHUB_ENV
+          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
 
-      - name: Insert Commit ID to PostgreSQL DB
+      - name: Insert Commit Info to PostgreSQL DB
         env:
           PGPASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          echo "Inserting commit $COMMIT_ID into DB"
+          echo "Inserting commit $COMMIT_ID by $AUTHOR_NAME with message '$COMMIT_MSG' into DB"
           psql -h ${{ secrets.DB_HOST }} \
                -U ${{ secrets.DB_USER }} \
                -d ${{ secrets.DB_NAME }} \
-               -c "INSERT INTO commit_log (commit_id) VALUES ('$COMMIT_ID');"
+               -c "INSERT INTO commit_log (commit_id, author_name, commit_message) VALUES ('$COMMIT_ID', '$AUTHOR_NAME', '$COMMIT_MSG');"
