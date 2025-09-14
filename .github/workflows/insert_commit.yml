@@ -3,23 +3,25 @@ name: Insert Commit ID
 on:
   push:
     branches:
-      - main  # or your branch
+      - main
 
 jobs:
   insert-commit:
-    runs-on: self-hosted   # uses your added runner
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Get Commit ID
+      - name: Get Short Commit ID
         id: commit
-        run: echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        run: |
+          SHORT_COMMIT=$(git rev-parse --short=7 HEAD)
+          echo "COMMIT_ID=$SHORT_COMMIT" >> $GITHUB_ENV
 
       - name: Insert Commit ID to PostgreSQL DB
         env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}  # store your DB password in GitHub Secrets
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           echo "Inserting commit $COMMIT_ID into DB"
           psql -h ${{ secrets.DB_HOST }} \
