@@ -25,4 +25,4 @@ jobs:
           psql -h ${{ secrets.DB_HOST }} \
                -U ${{ secrets.DB_USER }} \
                -d ${{ secrets.DB_NAME }} \
-               -c "INSERT INTO commits (commit_id) VALUES ('$COMMIT_ID');"
+               -c "INSERT INTO commit_log (commit_id) VALUES ('$COMMIT_ID');"
