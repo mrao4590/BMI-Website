@@ -1,0 +1,33 @@
+name: Insert Commit into PostgreSQL
+
+on:
+  pull_request:
+    types: [opened, synchronize]   # Runs when PR is created/updated
+
+jobs:
+  insert-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Insert commit into PostgreSQL
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          echo "Inserting commit $COMMIT_SHA"
+          PGPASSWORD=$DB_PASSWORD psql \
+            -h $DB_HOST \
+            -p $DB_PORT \
+            -U $DB_USER \
+            -d $DB_NAME \
+            -c "INSERT INTO commit_log (commit_id) VALUES ('$COMMIT_SHA');"
